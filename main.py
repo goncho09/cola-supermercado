@@ -27,21 +27,18 @@ class Caja:
         self.clientes.append(cliente)
         self.tiempo_libre += cliente.tiempo_atencion + cliente.tiempo_pago
 
-def simular(n=100, k=3, tiempo_llegada_media=3, metodo='fila_unica'):
-    cajas = [Caja() for _ in range(k)]
+def simular(personas=5, nroCajas=4, tiempo_llegada_media=3):
+    cajas = [Caja() for _ in range(nroCajas)]
     tiempos_espera = []
-    tiempos_atencion = [[] for _ in range(k)]
+    tiempos_atencion = [[] for _ in range(nroCajas)]
     
-    for i in range(n):
+    for i in range(personas):
         tiempo_llegada = np.random.poisson(tiempo_llegada_media)
         productos = np.random.randint(1, 11)
         cliente = Cliente(i, productos)
 
-        if metodo == 'fila_unica':
-            caja = min(cajas, key=lambda c: len(c.clientes))
-        else:
-            caja = min(cajas, key=lambda c: len(c.clientes))
-        
+        caja = min(cajas, key=lambda c: len(c.clientes))
+
         tiempos_espera.append(caja.tiempo_libre)
         caja.atender_cliente(cliente)
         caja.tiempo_libre += tiempo_llegada
@@ -52,8 +49,16 @@ def simular(n=100, k=3, tiempo_llegada_media=3, metodo='fila_unica'):
 # Función para visualizar resultados
 def visualizar(tiempos_espera, tiempos_atencion):
     # Crear subgráficas
-    fig, axs = plt.subplots(2, 2, figsize=(12, 10))
-    axs = axs.flatten()  # Aplanar la matriz de ejes
+    nroCajas = len(tiempos_atencion)
+    total_graficas = nroCajas + 1  # Total de gráficos: uno por cada caja y uno para el tiempo de espera
+
+    # Determinar el número de filas y columnas necesario para acomodar todas las subgráficas
+    columnas = 2
+    filas = (total_graficas + 1) // columnas
+
+    # Crear subgráficas dinámicamente
+    fig, axs = plt.subplots(filas, columnas, figsize=(12, filas * 5))
+    axs = axs.flatten()  # Aplanar los ejes para un acceso más fácil
 
     # Graficar tiempos de atención por caja
     for i, tiempos in enumerate(tiempos_atencion):
@@ -63,20 +68,22 @@ def visualizar(tiempos_espera, tiempos_atencion):
         axs[i].set_ylabel('Tiempo de Atención (min)')
         axs[i].legend()
 
-    # Graficar tiempos de espera en el último eje
-    axs[-1].plot(tiempos_espera, label='Tiempo de Espera', color='orange')
-    axs[-1].set_title('Tiempo de Espera de Clientes')
-    axs[-1].set_xlabel('Cliente')
-    axs[-1].set_ylabel('Tiempo de Espera (min)')
-    axs[-1].legend()
+    # Graficar tiempos de espera en el siguiente eje disponible
+    axs[nroCajas].plot(tiempos_espera, label='Tiempo de Espera', color='orange')
+    axs[nroCajas].set_title('Tiempo de Espera de Clientes')
+    axs[nroCajas].set_xlabel('Cliente')
+    axs[nroCajas].set_ylabel('Tiempo de Espera (min)')
+    axs[nroCajas].legend()
+
+    # Ocultar cualquier eje adicional no utilizado
+    for j in range(total_graficas, len(axs)):
+        fig.delaxes(axs[j])
 
     plt.tight_layout()  # Ajustar el espacio entre subgráficas
     plt.show()
 
 # Ejecución de la simulación
-tiempos_espera_fila_unica, tiempos_atencion_fila_unica = simular(metodo='fila_unica')
-tiempos_espera_filas_distintas, tiempos_atencion_filas_distintas = simular(metodo='filas_distintas')
+tiempos_espera_fila_unica, tiempos_atencion_fila_unica = simular()
 
 # Visualizar resultados
 visualizar(tiempos_espera_fila_unica, tiempos_atencion_fila_unica)
-visualizar(tiempos_espera_filas_distintas, tiempos_atencion_filas_distintas)
